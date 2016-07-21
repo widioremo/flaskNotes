@@ -1,0 +1,191 @@
+=======================
+CHAPTER 4: Web Forms
+=============================
+
+-request object exposes request.forms which provides access to form data submitted in POST requests
+
+-Flask-WTF extension: web forms
+
+***********************************************
+Cross-Site Request Forgery (CSRF) Protection
+***********************************************
+
+-Flask-WTF protects all forms against CSRF
+-CSRF : when a malicious website sends requests to a different website on which the victim is logged in
+
+-a key must be configured to encrypt tokens used to verify the authenticity of requests with form data
+
+-app.config['SECURITY_KEY'] - store key in config dictionary
+-key must be secret
+
+****************************
+Form Classes
+***************************
+
+-with Flask-WTF each web form represented by a class that inherits from class Form
+-class defines the list of fields in ther form, each represented by an object
+-each field may have one or more validators
+
+	Example: 
+
+	from flask.ext.wtf import Form
+	from wtforms import StringField, SubmitField
+	from wtforms.validators import Required
+
+	class NameForm(Form):
+		name = StringField('What is your name?', validators=[Required()])
+		submit = SubmitField('Submit')
+
+-StringField : <input> with type = text
+-SubmitField : <input> with type = submit
+
+********************************
+HTML Rendering  of Forms
+********************************
+
+-form fields are invoked from a template to render the html
+
+	Example:
+		<form method="POST">
+		{{ form.name.label }} {{ form.name(id='my-text-field') }}
+		{{ form.submit() }}
+		</form>
+
+-the rendered form is bare but can be improved using bootstrap
+-arguements passed into the call are renderd as HTML attributes
+
+
+	Example:
+
+		{% import "bootstrap/wtf.html" as wtf %}
+		{{ wtf.quick_form(form) }}
+
+-wtf.html defines helper functions that heldp render flask-wtf forms with bootstrap
+
+-wtf.quick_form() renders Flask-WTF form obj using default bootstrap styles
+
+
+********************************
+Form Handling in View Functions
+********************************
+-here index() renders the form and also receives the data
+
+
+Example:
+	@app.route('/', methods=['GET', 'POST'])
+	def index():
+		name = None
+		form = NameForm()
+		if form.validate_on_submit():
+			name = form.name.data
+			form.name.data = ''
+		return render_template('index.html', form=form, name=name)
+
+
+- the methods=['GET','POST'] registeres the view function as a handler fro GET and POST requests in the URL map
+- if methods is not provided the view function defaults to handling GET only
+
+-on initial load a GET request is sent to server, there is no form data and hence the name var is empty (None)
+
+-the form.validate_on_submit() will be False and form paage is rendered with form.
+
+-When name is submited form.validate_on_submit() is True and Form rendered with name variable stored in the data attribute of the input field ie. form.name.data
+
+-If the user submits the form with an empty name, the Required() validatior catches the
+error
+
+
+*****************************
+Redirects and User Sessions
+*****************************
+-on reload the browser will resubmit the last request, in this case the POST from the form, which is undesired
+
+-Post/Redirect/Get pattern: is used to solve the issue of form resubmission,
+
+-what happens is that the POST request is responded to with redirect instead of the normal response.
+
+-redirect is a response with a url instead of html string
+
+-SECOND PROBLEM: this pattern causes the form data to be unaccessible once the POST request is over
+
+-hence the data needs to be stored in the request context variable session as user session data with is private to the connected client
+
+-session is accessed like a standard python dictionary
+
+-user sessions are stored in client-side cookies that are cryptographically signed using the configured SECRET_KEY.
+
+-tampering with the cookie content would render the signature invalid
+
+
+
+	Example: Redirects and user sessions
+
+	from flask import Flask, render_template, session, redirect, url_for
+	
+	@app.route('/', methods=['GET', 'POST'])
+	def index():
+		form = NameForm()
+		if form.validate_on_submit():
+			session['name'] = form.name.data
+			return redirect(url_for('index'))
+		return render_template('index.html', form=form, name=session.get('name'))
+
+- redirect(<url>) : used to redirect
+.url_for(<endpoint name>): builds url from url map created by routes
+
+
+*********************
+Message Flashing
+*********************
+
+- functionality to alert user e.g. invalid entry
+- Flask uses flash() for this
+
+	Example: flash msg
+
+	from flask import Flask, render_template, session, redirect, url_for, flash
+
+	@app.route('/', methods=['GET', 'POST'])
+	def index():
+		form = NameForm()
+		if form.validate_on_submit():
+			old_name = session.get('name')
+		if old_name is not None and old_name != form.name.data:
+			flash('Looks like you have changed your name!')
+		session['name'] = form.name.data
+		form.name.data = ''
+		return redirect(url_for('index'))
+	return render_template('index.html',
+		form = form, name = session.get('name'))
+
+
+-to display message, get_flashed_messages() fn is used to retrieve and render the flashed msg
+
+	Example: Flash msg rendering
+
+	{% block content %}
+	<div class="container">
+		{% for message in get_flashed_messages() %}
+		<div class="alert alert-warning">
+			<button type="button" class="close" data-dismiss="alert">&times;</button>
+			{{ message }}
+		</div>
+		{% endfor %}
+		{% block page_content %}{% endblock %}
+	</div>
+	{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

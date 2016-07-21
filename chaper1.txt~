@@ -1,0 +1,154 @@
+======================================================================
+
+CHAPTER 1
+
+======================================================================
+
+cloning : git clone <url>
+initialize folder to version 1a: git checkout 1a
+
+creatig a virtual environment: virtualenv <foldername> //usually venv
+to activate virtual env: source venv/bin/activate
+to deactivate: deactivate
+
+Install flask with pip: pip install flask
+
+======================================================================
+
+CHAPTER 2
+
+======================================================================
+
+******************
+Initialization
+*****************
+-All apps create an application instance
+-web server passes requests it gets using WSGI(web server gateway   interface)
+
+ from flask inport Flask
+ app = Flask(__name__)
+
+-__name__ passes the root path( name of package or main module) of the application for resource location
+
+***************************
+Routes and View Functions
+**************************
+
+-request --sent to--> web server --forwards to--> Flask app instance
+-a route is a mapping beteen a URL and a function that handles it
+
+-use app.route decorator to define a route
+-the decorated function is registered as a route
+
+	@app.route('/')
+	def index():
+		 return '<h1>Hello World!</h1>'
+
+-above index is a view function
+-view function returns html strings
+
+-route decorator with dynamic name component:
+
+	@app.route('/user/<name>')
+	def user(name):
+		 return '<h1>Hello, %s!</h1>' % name
+
+
+-dynamic compolnents in routes are strings
+-can also be defined with a type
+-to match URI with an integer in the id dynamic segment use:
+	
+	route /user/<int:id>
+
+-other types: int,float,path for routes //path type considers slashes as part of the dynamic component
+
+****************
+Server Startup
+****************
+
+-run() method launches python's intergrated development web server
+	
+	if __name__ == '__main__':
+		app.run(debug=True)
+
+-__name__ == '__main__' idiom to ensure that the development web server
+	is started only when the script is executed directly
+
+-if script is imported then parent script will lai=unch a different serever(assumption) so app.run() is skipped
+
+-server goes into a loop waiting for requests
+
+***********************
+A Complete Application
+***********************
+
+ - Example 2-1
+ -git checkout 2a
+ -git checkout 2b
+
+
+		from flask import Flask
+		app = Flask(__name__)
+		
+		@app.route('/')
+		def index():
+			return '<h1>Hello World!</h1>'
+
+		@app.route('/user/<name>')
+		def user(name):
+			return '<h1>Hello, %s!</h1>' % name
+
+		if __name__ == '__main__':
+			app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

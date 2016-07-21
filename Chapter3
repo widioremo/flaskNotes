@@ -1,0 +1,226 @@
+=======================================
+CHAPTER 3: Templates
+========================================
+
+-tempalte: contains the text of a response with placeholder vars for the dynamic parts that are known only in the context of a request
+
+-rendering: process that replaces the variables with actual values and returns a final response string 
+
+********************
+Rendering Tempaltes
+********************
+
+-store templates file in a template subfolder as index.html and user.html
+
+-import render_template from flask
+-return render_template(<name of template>, <variables>)
+
+*********************
+Variables
+*********************
+
+-eg {{name}}
+
+- vars can be modified with filters  with pipe seperator eg {{name |capitalize}}
+-other filters: safe, upper, lower, title, trim striptags
+
+
+*********************
+Control Structures
+*********************
+-if 
+-for loop
+
+-macros- similar to functions
+
+	Example: 
+
+		{% macro render_comment(comment) %}
+			<li>{{ comment }}</li>
+		{% endmacro %}
+		<ul>
+			{% for comment in comments %}
+				{{ render_comment(comment) }}
+			{% endfor %}
+		</ul>
+
+- macros can be stored in a separate file wich can be imported 
+
+	Example:
+
+		{% import 'macros.html' as macros %}
+		<ul>
+			{% for comment in comments %}
+				{{ macros.render_comment(comment) }}
+			{% endfor %}
+		</ul>
+
+
+
+-includes : portions of code that need to be repeated in several places can be stored in a seperate file and included from all the templates 
+
+		{% include 'common.html' %}
+
+- template inheritance: similar to class inheritance
+- first create a base template , base.html
+		
+		Example: base.html
+
+		<html>
+		<head>
+			{% block head %}
+			<title>{% block title %}{% endblock %} - My Application</title>
+			{% endblock %}
+		</head>
+		<body>
+			{% block body %}
+			{% endblock %}
+		</body>
+		</html>
+
+		-block tags define elements that the derived template can change
+
+		Example: derived 
+
+		{% extends "base.html" %}
+		{% block title %}Index{% endblock %}
+		{% block head %}
+			{{ super() }}
+			<style>
+			</style>
+		{% endblock %}
+		{% block body %}
+		<h1>Hello, World!</h1>
+		{% endblock %}
+
+		-super() is used to retain original contents of the head block while defining new contents
+
+
+*************************************
+Twitter Bootstrap Integration with Flask-Bootstrap
+*****************************************************
+
+-alternative is to use flast ext called Flask-Bootstrap
+
+-has already defined blocks and base template
+-to edit some eg script use the super()
+
+	Example:
+
+	{% block scripts %}
+	{{ super() }}
+		<script type="text/javascript" src="my-script.js"></script>
+	{% endblock %}
+
+
+************************
+Custom Error Pages
+************************
+
+- for not found 404 and 500 unkown route
+- handlers can be provided as shown
+	Example:
+
+	@app.errorhandler(404)
+	def page_not_found(e):
+		return render_template('404.html'), 404
+	
+	@app.errorhandler(500)
+	def internal_server_error(e):
+		return render_template('500.html'), 500
+
+-template inheritance can be used to specify a custom base template with navigation etc...
+
+
+***************************
+Links
+**************************
+
+-links may be written directly for simple routes 
+-more complex dynamic links may break if the routes are changed 
+-url_for():helper fn used to avoid these problems by generating info from URLs in the application URL map
+
+-url_for('index') returns relative URL - sufficient for linking routes 
+
+-url_for('index', _external=True) - returns absolute URL for external linking
+
+-url_for('user', name='john',_external=True) : used to pass dynamic content as key value pairs
+
+-any extra arguements are added to the query string
+
+-url_for('user', name='john', _external=True)
+would return http://localhost:5000/user/john
+
+-url_for('index', page=2) would return /?page=2
+
+
+*******************
+Static Files
+*******************
+
+- /static/<filename> : special route fn for static files
+- url_for('static', filename='css/styles.css', _external=True) would return
+http://localhost:5000/static/css/styles.css.
+
+
+	Example:
+
+		{% block head %}
+		{{ super() }}
+		<link rel="shortcut icon" href="{{ url_for('static', filename = 'favicon.ico') }}"
+		type="image/x-icon">
+		<link rel="icon" href="{{ url_for('static', filename = 'favicon.ico') }}"
+		type="image/x-icon">
+		{% endblock %}
+
+
+*********************
+Localization of Dates and Times with Flask-Moment
+**************************************************
+
+- handling dates  and times in a web app is not a trivial problem whe users work in different parts of the world
+
+-Coordinated Universal Time UTC is used
+
+-send the time units to the browser which converts the time to local time
+
+	Example:
+
+	{% block scripts %}
+	{{super()}}
+	{{moment.include_moment()}}
+	{% endblock %}
+
+-passing variable to template for rendering:
+
+	Example:
+
+	@app.route('/')
+	def index():
+		return render_template('index.html',
+		current_time=datetime.utcnow())
+
+-to render on the template 
+
+	Example:
+
+	<p>The local date and time is {{ moment(current_time).format('LLL') }}.</p>
+	
+	<p>That was {{ moment(current_time).fromNow(refresh=True) }}</p>
+
+-format('LLL') : renders date and time according to the time zone and locale setrings in the client comp.
+
+-args range from 'L' to 'LLLL' for different levels of verbosity
+
+-fromN0w() renders a relative timestamp: i.r seconds ago, a few minutes ago, etc...
+
+-other moment js fns: format(), fromNow(), fromTime(), calender(), valueOf(), unix()
+
+-to localize timestamp pass it to land() fn
+
+	Example:
+	{{ moment.lang('es') }}
+
+
+
+

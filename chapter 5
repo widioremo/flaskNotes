@@ -1,0 +1,121 @@
+==================================
+CHAPTER 5: DATABASES
+================================================
+
+SQL
+******
+
+NoSQL Databases
+******************
+- dont use relational model
+- uses collections instead of tables
+- documents instead of records
+- cannot perform joins or is difficult to do so
+- denormalization: reduces number of tables at expense 		of duplication
+- python provides packages for most db engines
+- python also provides abstraction engines like; SQLAlchemy and MongoEngine 
+- abstraction layers allow user to work with python objects instead of db entities
+
+- abstraction layers a.k.a object-relational mappers ORMs or ODMs
+
+- choosing a Flask-ready ext saves you from having ro write the flask intergration code
+
+-Flask-SQLAlchemy 
+
+**********************************************
+Database Management with Flask-SQLAlchemy
+**********************************************
+
+-pip install flask-sqlalchemy
+-databases are specified as URLs
+
+MySQL mysql://username:password@hostname/database
+Postgres postgresql://username:password@hostname/database
+SQLite (Unix) sqlite:////absolute/path/to/database
+SQLite (Windows) sqlite:///c:/absolute/path/to/database
+
+
+-URl of app database must be configd as SQLALCHEMY_DATABASE_URI in flask config obj
+
+-SQLALCHEMY_COMMIT_ON_TEARDOWN : set to True to enable automatic commits of the db changes at end of each request
+
+	Example: Db config for sqlite
+
+	from flask.ext.sqlalchemy import SQLAlchemy
+	
+	basedir = os.path.abspath(os.path.dirname(__file__))
+	
+	app = Flask(__name__)
+	app.config['SQLALCHEMY_DATABASE_URI'] =\
+		'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+	app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+	db = SQLAlchemy(app)
+
+********
+Model Definition
+**************************
+
+-model : term used to refer to persistent entities used by the application
+
+-in ORM context: model is a python class with attributes that match the columns of a corres db table
+
+	Example: Role and User model definition
+
+	class Role(db.Model):
+		__tablename__ = 'roles'
+		id = db.Column(db.Integer, primary_key=True)
+		name = db.Column(db.String(64), unique=True)
+
+		def __repr__(self):
+			return '<Role %r>' % self.name
+
+	class User(db.Model):
+		__tablename__ = 'users'
+		id = db.Column(db.Integer, primary_key=True)
+		username = db.Column(db.String(64), unique=True, index=True)
+
+	def __repr__(self):
+		return '<User %r>' % self.username
+
+- __tablename__ : defines the name of the table in db
+- rest data members define columbs ass instances of db.Column class
+
+-arguments to db.COlumn specify type of column and config attr.
+
+-__repr__() method provides a sting representation for debugging and testing
+
+***********************
+Relationships
+***********************
+
+ Example: Relationships
+
+ 	class Role(db.Model):
+		# ...
+		users = db.relationship('User', backref='role')
+	
+	class User(db.Model):
+		# ...
+		role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+
+
+
+-role_id column is added to User table
+-db.ForeignKey() defines the role_id as a Foreign key
+-roles.id arg states role_id is to contain id values from rows in the roles table
+
+-users attr added to model Role rep obj-oriented view of relationship.
+
+-1st arg in db.relationship() indicates what model is on other side of the relationship
+
+-backref arg defines reverse directio of the rel by adding a role attrib to User model
+
+-
+
+
+
+
+
+
+
+

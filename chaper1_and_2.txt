@@ -1,0 +1,284 @@
+======================================================================
+
+CHAPTER 1
+
+======================================================================
+
+cloning : git clone <url>
+initialize folder to version 1a: git checkout 1a
+
+creatig a virtual environment: virtualenv <foldername> //usually venv
+to activate virtual env: source venv/bin/activate
+to deactivate: deactivate
+
+Install flask with pip: pip install flask
+
+======================================================================
+
+CHAPTER 2
+
+======================================================================
+
+******************
+Initialization
+*****************
+-All apps create an application instance
+-web server passes requests it gets using WSGI(web server gateway   interface)
+
+ from flask inport Flask
+ app = Flask(__name__)
+
+-__name__ passes the root path( name of package or main module) of the application for resource location
+
+***************************
+Routes and View Functions
+**************************
+
+-request --sent to--> web server --forwards to--> Flask app instance
+-a route is a mapping beteen a URL and a function that handles it
+
+-use app.route decorator to define a route
+-the decorated function is registered as a route
+
+	@app.route('/')
+	def index():
+		 return '<h1>Hello World!</h1>'
+
+-above index is a view function
+-view function returns html strings
+
+-route decorator with dynamic name component:
+
+	@app.route('/user/<name>')
+	def user(name):
+		 return '<h1>Hello, %s!</h1>' % name
+
+
+-dynamic compolnents in routes are strings
+-can also be defined with a type
+-to match URI with an integer in the id dynamic segment use:
+	
+	route /user/<int:id>
+
+-other types: int,float,path for routes //path type considers slashes as part of the dynamic component
+
+****************
+Server Startup
+****************
+
+-run() method launches python's intergrated development web server
+	
+	if __name__ == '__main__':
+		app.run(debug=True)
+
+-__name__ == '__main__' idiom to ensure that the development web server
+	is started only when the script is executed directly
+
+-if script is imported then parent script will lai=unch a different serever(assumption) so app.run() is skipped
+
+-server goes into a loop waiting for requests
+
+***********************
+A Complete Application
+***********************
+
+ - Example 2-1
+ -git checkout 2a
+ -git checkout 2b
+
+ - Example 2-2
+		from flask import Flask
+		app = Flask(__name__)
+		
+		@app.route('/')
+		def index():
+			return '<h1>Hello World!</h1>'
+
+		@app.route('/user/<name>')
+		def user(name):
+			return '<h1>Hello, %s!</h1>' % name
+
+		if __name__ == '__main__':
+			app.run(debug=True)
+
+***********************
+Request-Response Cycle
+***********************
+
+	Application and Request Contexts
+   ________________________________
+
+	- flask needs to avail some objects to view functions when requests are recieved eg request obj
+	- flask uses contexts to make some objects globally accessible instead of passing the objects as args, keeps the code clean
+	- using contexts we can derive various info in view functions
+		
+		from flask import request
+		@app.route('/')
+		def index():
+			user_agent = request.headers.get('User-Agent')
+			return '<p>Your browser is %s</p>' % user_agent
+
+
+
+	-context enable some vars to be globally accessible to a thread without interfering with other threads 
+	-t=two contexts in Flask: application context and request context
+
+	-Application context variables: 
+		+current_app: app instance of active application 
+		+g: object for temp storage during handling of request, reset with each request.
+
+	-Request context vars:
+		+requet: object that encapsulates contents of HTTP request sent by client
+		+session: user session, dictionary to store values that are remembered between requests
+
+
+	-applicaiton context obtained by invoking app.app_context() on app instance
+
+
+***********************
+Request Dispatching
+***********************
+
+	- flask builds URL map which specifies which view function will handle a given URL
+
+	- the URL map is built using the app.route decorators or app.add_url_rule()
+
+	-each URL map has specified request methods it can handle i.e HEAD OPTIONS GET, though flask handles HEAD and OPTIONS automatically
+
+
+****************
+Request Hooks
+****************
+	
+	-used to register common functions that should be executed before or after a request is dispatched to a view function eg, database connection, user auth
+
+	-implemented as decorators 
+	-four hooks supported by Flask:
+
+		+ before_first_request : reg function to run before first request is handled
+
+		+ before_request : register function to run before each request
+
+		+ after_request : register a function to run after each request
+
+		+teardown_request : register a function to run after each request, even if unhandled exceptions occured
+
+-use g context global to share data between hook functions and view functions
+
+****************
+Responses
+****************
+
+-HTTP protocal expects a status code as part of the request rersponse
+
+-flask sets default status code to 200
+
+- to specify a different status code for the response, add the numeric code as a second return value after the response text
+	
+	Example: 
+
+		@app.route('/')
+		def index():
+		return '<h1>Bad Request</h1>', 400
+
+
+
+- responses returned can also take a third arguement: a dictionary of headers which are added to the HTTP response  
+
+-make_response() function takes arguements - values to be returned by the view functions and returns a Response object
+
+- this is as opposed to returning a tuple of the values
+
+-Response object provides functions that can be used to further configure the response
+
+	Example: 
+
+		from flask import make_response
+
+		@app.route('/')
+		def index():
+			response = make_response('<h1>This document carries a cookie!</h1>')
+			response.set_cookie('answer', '42')
+			return response
+
+-redirect is a special type of response with a code of 302
+-a new url usually provided in the Location header
+-Flask provides a redirect() helper function that creates this response
+
+	Example: 
+
+		from flask import redirect
+		@app.route('/')
+
+			def index():
+			return redirect('http://www.example.com')
+
+-abort : special response issued with abort() used for error handling.
+
+	Example:
+
+	from flask import abort
+
+	@app.route('/user/<id>')
+	def get_user(id):
+
+		user = load_user(id)
+		if not user:
+		abort(404)
+		return '<h1>Hello, %s</h1>' % user.name			
+
+
+
+
+*****************
+Flask Extensions
+*****************
+
+	*****************************************
+	Command Line Options with Flask-Script
+	****************************************
+
+- to add CLI parsing ability to flask app use Flask-Script
+- Flask-Script - flask extenstion
+- installl using pip: pip install flask-script
+
+	+shell command starts a python shell session in context of the application
+
+	+runserver starts the web server
+		-runserver --host tells web server where to listen to for connections from clients
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
